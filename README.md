@@ -10,7 +10,8 @@
 ![Electron](https://img.shields.io/badge/Electron-Desktop-47848F?style=flat-square&logo=electron&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Mahnoor-fatima249/LLM-COST-TRACKER)
+https://llm-cost-tracker-blond.vercel.app/
+
 
 </div>
 
