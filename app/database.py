@@ -4,7 +4,10 @@ from app.config import get_settings
 
 settings = get_settings()
 
-engine = create_async_engine(settings.DATABASE_URL, echo=False)
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+engine = create_async_engine(db_url, echo=False)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
@@ -21,9 +24,9 @@ async def get_db():
 
 
 async def init_db():
-    if settings.DATABASE_URL.startswith("sqlite"):
+    if db_url.startswith("sqlite"):
         import aiosqlite
-        db_path = settings.DATABASE_URL.split("///", 1)[1]
+        db_path = db_url.split("///", 1)[1]
         if db_path != ":memory:":
             try:
                 async with aiosqlite.connect(db_path) as conn:
