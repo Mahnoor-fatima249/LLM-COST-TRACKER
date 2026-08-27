@@ -11,3 +11,4 @@ httpx
 aiofiles
 python-dateutil
 stripe
+mangum

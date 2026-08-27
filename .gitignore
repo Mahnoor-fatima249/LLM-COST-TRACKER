@@ -15,3 +15,4 @@ desktop/dist/
 desktop/build/
 desktop/package-lock.json
 *.pyc
+.vercel
