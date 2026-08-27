@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from sqlalchemy import select, func, case
+from sqlalchemy import select, func, case, extract, cast, Date
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import CostLog
 
@@ -58,14 +58,14 @@ async def get_daily_costs(db: AsyncSession, user_id, days: int = 30) -> list[dic
     start_date = datetime.utcnow() - timedelta(days=days)
     result = await db.execute(
         select(
-            func.date(CostLog.created_at).label("date"),
+            cast(CostLog.created_at, Date).label("date"),
             func.sum(CostLog.cost).label("total_cost"),
             func.count(CostLog.id).label("total_calls"),
             func.sum(CostLog.input_tokens + CostLog.output_tokens).label("total_tokens"),
         )
         .where(CostLog.user_id == user_id, CostLog.created_at >= start_date)
-        .group_by(func.date(CostLog.created_at))
-        .order_by(func.date(CostLog.created_at))
+        .group_by(cast(CostLog.created_at, Date))
+        .order_by(cast(CostLog.created_at, Date))
     )
     rows = result.all()
     return [
@@ -133,13 +133,13 @@ async def get_hourly_costs(db: AsyncSession, user_id) -> list[dict]:
     today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     result = await db.execute(
         select(
-            func.strftime("%H", CostLog.created_at).label("hour"),
+            extract("hour", CostLog.created_at).label("hour"),
             func.sum(CostLog.cost).label("total_cost"),
             func.count(CostLog.id).label("total_calls"),
         )
         .where(CostLog.user_id == user_id, CostLog.created_at >= today)
-        .group_by(func.strftime("%H", CostLog.created_at))
-        .order_by(func.strftime("%H", CostLog.created_at))
+        .group_by(extract("hour", CostLog.created_at))
+        .order_by(extract("hour", CostLog.created_at))
     )
     rows = result.all()
     return [
