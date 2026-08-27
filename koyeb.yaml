@@ -1,0 +1,15 @@
+services:
+  - name: llm-cost-tracker
+    type: web
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    env:
+      - name: SECRET_KEY
+        value: my-production-secret-key-12345
+      - name: DATABASE_URL
+        value: sqlite+aiosqlite:///./llm_cost_tracker.db
+      - name: DISABLE_BILLING
+        value: "true"
+    regions:
+      - fra
