@@ -13,4 +13,3 @@ python-dateutil
 stripe
 mangum
 asyncpg
-psycopg2-binary

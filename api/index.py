@@ -14,10 +14,6 @@ if VERCEL:
         os.environ["SECRET_KEY"] = secrets.token_urlsafe(32)
     os.environ["DISABLE_BILLING"] = "true"
 
-    db_url = os.environ.get("DATABASE_URL", "")
-    if db_url and db_url.startswith("postgresql://"):
-        os.environ["DATABASE_URL"] = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-
 from mangum import Mangum
 from app.main import app
 
