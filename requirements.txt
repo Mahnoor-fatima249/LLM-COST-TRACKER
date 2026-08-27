@@ -12,3 +12,4 @@ aiofiles
 python-dateutil
 stripe
 mangum
+asyncpg
