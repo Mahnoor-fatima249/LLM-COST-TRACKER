@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - app-data:/app/data
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+      - DATABASE_URL=sqlite+aiosqlite:///./data/llm_cost_tracker.db
+    restart: unless-stopped
+
+volumes:
+  app-data:

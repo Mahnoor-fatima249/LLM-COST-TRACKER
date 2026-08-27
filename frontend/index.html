@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Cost Tracker — Smart AI Spend Management</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <div id="toast-container"></div>
+
+        <!-- Custom Titlebar (Electron) -->
+        <div id="custom-titlebar" class="custom-titlebar" style="display:none">
+            <div class="titlebar-drag">
+                <div class="titlebar-brand">
+                    <svg width="16" height="16" viewBox="0 0 48 48" fill="none"><rect width="48" height="48" rx="14" fill="url(#tg)"/><path d="M14 24C14 18.48 18.48 14 24 14C29.52 14 34 18.48 34 24" stroke="white" stroke-width="3" stroke-linecap="round"/><path d="M19 24C19 21.24 21.24 19 24 19C26.76 19 29 21.24 29 24" stroke="white" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="24" r="3" fill="white"/><path d="M24 27V34" stroke="white" stroke-width="3" stroke-linecap="round"/><defs><linearGradient id="tg" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs></svg>
+                    <span>LLM Cost Tracker</span>
+                </div>
+            </div>
+            <div class="titlebar-controls">
+                <button class="titlebar-btn" onclick="window.electronAPI?.minimize()" title="Minimize">
+                    <svg width="12" height="12" viewBox="0 0 12 12"><rect y="5" width="12" height="1" fill="currentColor" rx="0.5"/></svg>
+                </button>
+                <button class="titlebar-btn" onclick="window.electronAPI?.maximize()" title="Maximize" id="btn-maximize">
+                    <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="1" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+                </button>
+                <button class="titlebar-btn titlebar-close" onclick="window.electronAPI?.close()" title="Close">
+                    <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- ===================== AUTH: FULL SCREEN SPLIT ===================== -->
+        <div id="auth-screen" class="auth-screen">
+            <!-- Left Panel - Branding -->
+            <div class="auth-left">
+                <div class="auth-left-content">
+                    <div class="brand-logo">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                            <rect width="48" height="48" rx="14" fill="url(#lg1)"/>
+                            <path d="M14 24C14 18.48 18.48 14 24 14C29.52 14 34 18.48 34 24" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                            <path d="M19 24C19 21.24 21.24 19 24 19C26.76 19 29 21.24 29 24" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                            <circle cx="24" cy="24" r="3" fill="white"/>
+                            <path d="M24 27V34" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                            <path d="M20 31H28" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                            <defs><linearGradient id="lg1" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
+                        </svg>
+                    </div>
+                    <h1>LLM Cost<br>Tracker</h1>
+                    <p>Track, analyze, and optimize your AI API spending across all providers in one place.</p>
+                    
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">📊</div>
+                            <div>
+                                <strong>Real-time Dashboard</strong>
+                                <span>Live cost tracking with beautiful charts</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🤖</div>
+                            <div>
+                                <strong>Multi-Provider</strong>
+                                <span>OpenAI, Groq, Google, Anthropic & more</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">🔔</div>
+                            <div>
+                                <strong>Budget Alerts</strong>
+                                <span>Get notified before overspending</span>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">📈</div>
+                            <div>
+                                <strong>Cost Forecasting</strong>
+                                <span>Predict future spending with AI</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="auth-left-bg">
+                    <div class="grid-pattern"></div>
+                    <div class="glow glow-1"></div>
+                    <div class="glow glow-2"></div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Auth Forms -->
+            <div class="auth-right">
+                <div class="auth-right-content">
+                    <!-- Login Form -->
+                    <div id="login-panel" class="auth-panel active">
+                        <div class="auth-panel-header">
+                            <h2>Welcome back</h2>
+                            <p>Sign in to your account to continue</p>
+                        </div>
+                        <form class="auth-form" onsubmit="handleLogin(event)">
+                            <div class="field">
+                                <label>Email address</label>
+                                <div class="input-wrapper">
+                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="3" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M1 5L9 10L17 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                    <input type="email" id="login-email" placeholder="you@company.com" required>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label>Password</label>
+                                <div class="input-wrapper">
+                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="8" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 8V5C6 3.34 7.34 2 9 2C10.66 2 12 3.34 12 5V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="12" r="1" fill="currentColor"/></svg>
+                                    <input type="password" id="login-password" placeholder="Enter your password" required>
+                                </div>
+                            </div>
+                            <div id="login-error" class="field-error hidden"></div>
+                            <button type="submit" class="btn-full" id="login-btn">
+                                <span>Sign In</span>
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9H14M14 9L10 5M14 9L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </form>
+                        <div class="auth-switch">
+                            Don't have an account? <a href="#" onclick="switchAuth('register')">Create one</a>
+                        </div>
+                    </div>
+
+                    <!-- Register Form -->
+                    <div id="register-panel" class="auth-panel">
+                        <div class="auth-panel-header">
+                            <h2>Create account</h2>
+                            <p>Start tracking your LLM costs today</p>
+                        </div>
+                        <form class="auth-form" onsubmit="handleRegister(event)">
+                            <div class="field">
+                                <label>Full name</label>
+                                <div class="input-wrapper">
+                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M3 16C3 13.24 5.69 11 9 11C12.31 11 15 13.24 15 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                    <input type="text" id="reg-name" placeholder="John Doe">
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label>Email address</label>
+                                <div class="input-wrapper">
+                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="3" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M1 5L9 10L17 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                    <input type="email" id="reg-email" placeholder="you@company.com" required>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label>Password</label>
+                                <div class="input-wrapper">
+                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="8" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 8V5C6 3.34 7.34 2 9 2C10.66 2 12 3.34 12 5V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="12" r="1" fill="currentColor"/></svg>
+                                    <input type="password" id="reg-password" placeholder="Min 6 characters" required minlength="6">
+                                </div>
+                            </div>
+                            <div id="register-error" class="field-error hidden"></div>
+                            <button type="submit" class="btn-full" id="reg-btn">
+                                <span>Create Account</span>
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9H14M14 9L10 5M14 9L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                        </form>
+                        <div class="auth-switch">
+                            Already have an account? <a href="#" onclick="switchAuth('login')">Sign in</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== DASHBOARD ===================== -->
+        <div id="dashboard-screen" class="dashboard-screen">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-brand">
+                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+                        <rect width="48" height="48" rx="14" fill="url(#lg2)"/>
+                        <path d="M14 24C14 18.48 18.48 14 24 14C29.52 14 34 18.48 34 24" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M19 24C19 21.24 21.24 19 24 19C26.76 19 29 21.24 29 24" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        <circle cx="24" cy="24" r="3" fill="white"/>
+                        <path d="M24 27V34" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                        <defs><linearGradient id="lg2" x1="0" y1="0" x2="48" y2="48"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs>
+                    </svg>
+                    <span class="brand-text">Cost Tracker</span>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <a class="sidebar-link active" data-section="overview" onclick="showSection('overview', this)">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="1" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="10" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="10" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
+                        <span>Overview</span>
+                    </a>
+                    <a class="sidebar-link" data-section="logs" onclick="showSection('logs', this)">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 4H16M2 9H16M2 14H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        <span>Logs</span>
+                    </a>
+                    <a class="sidebar-link" data-section="calculator" onclick="showSection('calculator', this)">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="6" cy="6" r="0.8" fill="currentColor"/><circle cx="9" cy="6" r="0.8" fill="currentColor"/><circle cx="12" cy="6" r="0.8" fill="currentColor"/><circle cx="6" cy="9" r="0.8" fill="currentColor"/><circle cx="9" cy="9" r="0.8" fill="currentColor"/><circle cx="12" cy="9" r="0.8" fill="currentColor"/><circle cx="6" cy="12" r="0.8" fill="currentColor"/><circle cx="9" cy="12" r="0.8" fill="currentColor"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg>
+                        <span>Calculator</span>
+                    </a>
+                    <a class="sidebar-link" data-section="comparison" onclick="showSection('comparison', this)">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M1 16L6 8L9 11L13 4L17 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Compare</span>
+                    </a>
+                    <a class="sidebar-link" data-section="budget" onclick="showSection('budget', this)">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M9 5V13M7 7H11M7 11H11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        <span>Budget</span>
+                    </a>
+                    <a class="sidebar-link" data-section="alerts" onclick="showSection('alerts', this)">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2C6.24 2 5 4.5 5 7V10L3 13H15L13 10V7C13 4.5 11.76 2 9 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 13C7 14.1 7.9 15 9 15C10.1 15 11 14.1 11 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        <span>Alerts</span>
+                        <span id="alert-badge" class="sidebar-badge hidden">0</span>
+                    </a>
+                    <div class="sidebar-divider"></div>
+                    <a class="sidebar-link" data-section="optimize" onclick="showSection('optimize', this)">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 1L11 7L17 9L11 11L9 17L7 11L1 9L7 7L9 1Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Optimize</span>
+                    </a>
+                    <a class="sidebar-link" data-section="pricing" onclick="showSection('pricing', this)">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L11.5 7.5L17 8.5L13 12.5L14 18L9 15.5L4 18L5 12.5L1 8.5L6.5 7.5L9 2Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>Pricing</span>
+                    </a>
+                    <a class="sidebar-link" data-section="plans" onclick="showSection('plans', this)">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="6" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 6V4.5C6 3.12 7.34 2 9 2C10.66 2 12 3.12 12 4.5V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 9V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        <span>Plans</span>
+                    </a>
+                    <a class="sidebar-link" data-section="api-ref" onclick="showSection('api-ref', this)">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 5L3 9L7 13M11 5L15 9L11 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span>API Reference</span>
+                    </a>
+                    <a class="sidebar-link" data-section="settings" onclick="showSection('settings', this)">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M14.8 11.2L13.4 12M14.8 6.8L13.4 6M3.2 11.2L4.6 12M3.2 6.8L4.6 6M9 1.5V3.5M9 14.5V16.5M1.5 9H3.5M14.5 9H16.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        <span>Settings</span>
+                    </a>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <div class="user-info" id="user-info">
+                        <div class="user-avatar">U</div>
+                        <div class="user-details">
+                            <span class="user-name" id="user-name">User</span>
+                            <span class="user-email" id="user-email">user@email.com</span>
+                        </div>
+                    </div>
+                    <button class="btn-logout" onclick="logout()" title="Sign out">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M7 16H4C3.45 16 3 15.55 3 15V3C3 2.45 3.45 2 4 2H7M13 13L16 9L13 5M16 9H7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Top Bar -->
+                <header class="topbar">
+                    <div class="topbar-left">
+                        <button class="sidebar-toggle" onclick="toggleSidebar()">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5H17M3 10H17M3 15H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        </button>
+                        <div class="page-title" id="page-title">
+                            <h1>Overview</h1>
+                            <p>Real-time spending dashboard</p>
+                        </div>
+                    </div>
+                    <div class="topbar-right">
+                        <div class="live-badge">
+                            <div class="live-dot"></div>
+                            Live
+                        </div>
+                        <select id="time-range" onchange="loadDashboard()" class="topbar-select">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                    </div>
+                </header>
+
+                <!-- Page Content -->
+                <div class="page-content">
+
+                    <!-- ===== OVERVIEW ===== -->
+                    <div id="section-overview" class="section active">
+                        <div class="stats-row">
+                            <div class="stat-card" style="--accent: var(--cyan)">
+                                <div class="stat-header">
+                                    <span class="stat-title">Today's Spend</span>
+                                    <div class="stat-icon-wrap cyan"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2V16M6 5H12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+                                </div>
+                                <div class="stat-value" id="stat-today">$0.00</div>
+                            </div>
+                            <div class="stat-card" style="--accent: var(--purple)">
+                                <div class="stat-header">
+                                    <span class="stat-title">This Week</span>
+                                    <div class="stat-icon-wrap purple"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M6 9L8 11L12 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                                </div>
+                                <div class="stat-value" id="stat-week">$0.00</div>
+                            </div>
+                            <div class="stat-card" style="--accent: var(--green)">
+                                <div class="stat-header">
+                                    <span class="stat-title">This Month</span>
+                                    <div class="stat-icon-wrap green"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 14L6 8L10 11L14 5L16 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                                </div>
+                                <div class="stat-value" id="stat-month">$0.00</div>
+                            </div>
+                            <div class="stat-card" style="--accent: var(--orange)">
+                                <div class="stat-header">
+                                    <span class="stat-title">API Calls</span>
+                                    <div class="stat-icon-wrap orange"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M9 5V9L12 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+                                </div>
+                                <div class="stat-value" id="stat-calls">0</div>
+                            </div>
+                            <div class="stat-card" style="--accent: var(--blue)">
+                                <div class="stat-header">
+                                    <span class="stat-title">Tokens</span>
+                                    <div class="stat-icon-wrap blue"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9C3 5.69 5.69 3 9 3C12.31 3 15 5.69 15 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 6V9L11 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+                                </div>
+                                <div class="stat-value" id="stat-tokens">0</div>
+                            </div>
+                            <div class="stat-card" style="--accent: var(--pink)">
+                                <div class="stat-header">
+                                    <span class="stat-title">Avg Latency</span>
+                                    <div class="stat-icon-wrap pink"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 14L7 6L11 10L15 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                                </div>
+                                <div class="stat-value" id="stat-latency">0ms</div>
+                            </div>
+                            <div class="stat-card" style="--accent: var(--red)">
+                                <div class="stat-header">
+                                    <span class="stat-title">Error Rate</span>
+                                    <div class="stat-icon-wrap red"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 6.5L11.5 11.5M11.5 6.5L6.5 11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+                                </div>
+                                <div class="stat-value" id="stat-errors">0%</div>
+                            </div>
+                            <div class="stat-card" style="--accent: var(--teal)">
+                                <div class="stat-header">
+                                    <span class="stat-title">Cache Hit</span>
+                                    <div class="stat-icon-wrap teal"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9C4 6.24 6.24 4 9 4C11.76 4 14 6.24 14 9C14 11.76 11.76 14 9 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 11L7 9L9 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                                </div>
+                                <div class="stat-value" id="stat-cache">0%</div>
+                            </div>
+                        </div>
+
+                        <div class="grid-2col">
+                            <div class="card">
+                                <div class="card-header"><h3>Daily Costs</h3><span class="card-badge">30 days</span></div>
+                                <canvas id="dailyChart" height="240"></canvas>
+                            </div>
+                            <div class="card">
+                                <div class="card-header"><h3>Today's Hourly Spend</h3><span class="card-badge green">Live</span></div>
+                                <canvas id="hourlyChart" height="240"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="grid-2col">
+                            <div class="card">
+                                <div class="card-header"><h3>Model Breakdown</h3></div>
+                                <canvas id="modelChart" height="220"></canvas>
+                            </div>
+                            <div class="card">
+                                <div class="card-header"><h3>Provider Distribution</h3></div>
+                                <canvas id="providerChart" height="220"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="card forecast-card">
+                            <div class="card-header"><h3>Cost Forecast</h3><span class="card-badge" id="forecast-trend-badge">Stable</span></div>
+                            <div class="forecast-row">
+                                <div class="forecast-box">
+                                    <div class="forecast-icon cyan"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 1L14.09 7.26L21 8.27L16 13.14L17.18 20.02L11 16.77L4.82 20.02L6 13.14L1 8.27L7.91 7.26L11 1Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                                    <div><span class="forecast-label">Projected Monthly</span><span class="forecast-value" id="forecast-projected">$0.00</span></div>
+                                </div>
+                                <div class="forecast-box">
+                                    <div class="forecast-icon purple"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M11 2V20M16 5H8.5C7.57 5 6.68 5.37 6.01 6.01C5.34 6.68 5 7.6 5 8.5C5 9.4 5.34 10.32 6.01 10.99C6.68 11.66 7.57 12 8.5 12H13.5C14.43 12 15.32 12.37 15.99 13.01C16.66 13.68 17 14.6 17 15.5C17 16.4 16.66 17.32 15.99 17.99C15.32 18.66 14.43 19 13.5 19H5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+                                    <div><span class="forecast-label">Average Daily</span><span class="forecast-value" id="forecast-daily">$0.00</span></div>
+                                </div>
+                                <div class="forecast-box">
+                                    <div class="forecast-icon green"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M14 2V6M8 2V6M3 10H19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+                                    <div><span class="forecast-label">Days Remaining</span><span class="forecast-value" id="forecast-days">0</span></div>
+                                </div>
+                                <div class="forecast-box">
+                                    <div class="forecast-icon orange"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M21 5L11.5 14.5L8.5 11.5L1 19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 5H21V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                                    <div><span class="forecast-label">Spent So Far</span><span class="forecast-value" id="forecast-spent">$0.00</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== LOGS ===== -->
+                    <div id="section-logs" class="section">
+                        <div class="section-topbar">
+                            <button class="btn-secondary" onclick="exportCSV()">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 11V13C2 13.55 2.45 14 3 14H13C13.55 14 14 13.55 14 13V11M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                Export CSV
+                            </button>
+                        </div>
+                        <div class="filters-row">
+                            <div class="filter-item">
+                                <label>Provider</label>
+                                <select id="filter-provider" onchange="loadLogs()"><option value="">All</option><option value="openai">OpenAI</option><option value="groq">Groq</option><option value="google">Google</option><option value="anthropic">Anthropic</option><option value="mistral">Mistral</option></select>
+                            </div>
+                            <div class="filter-item">
+                                <label>Model</label>
+                                <input type="text" id="filter-model" placeholder="Filter..." oninput="debounceLogs()">
+                            </div>
+                            <div class="filter-item">
+                                <label>Status</label>
+                                <select id="filter-status" onchange="loadLogs()"><option value="">All</option><option value="success">Success</option><option value="error">Error</option></select>
+                            </div>
+                            <div class="filter-item">
+                                <label>Project</label>
+                                <input type="text" id="filter-project" placeholder="Filter..." oninput="debounceLogs()">
+                            </div>
+                        </div>
+                        <div class="table-wrap">
+                            <table><thead><tr><th>Time</th><th>Provider</th><th>Model</th><th>Input</th><th>Output</th><th>Cost</th><th>Latency</th><th>Status</th><th>Cache</th></tr></thead><tbody id="logs-body"></tbody></table>
+                            <div class="empty-state hidden" id="logs-empty"><p>No logs found</p></div>
+                        </div>
+                        <div class="pagination" id="logs-pagination"></div>
+                    </div>
+
+                    <!-- ===== CALCULATOR ===== -->
+                    <div id="section-calculator" class="section">
+                        <div class="grid-2col">
+                            <div class="card">
+                                <h3 style="margin-bottom:20px">Calculate Cost</h3>
+                                <div class="calc-form">
+                                    <div class="field"><label>Provider</label><select id="calc-provider" onchange="updateModelList()"><option value="openai">OpenAI</option><option value="groq">Groq</option><option value="google">Google</option><option value="anthropic">Anthropic</option><option value="mistral">Mistral</option></select></div>
+                                    <div class="field"><label>Model</label><select id="calc-model" onchange="calculateCost()"></select></div>
+                                    <div class="grid-2col" style="gap:12px">
+                                        <div class="field"><label>Input Tokens</label><input type="number" id="calc-input" value="1000" min="0" oninput="calculateCost()"></div>
+                                        <div class="field"><label>Output Tokens</label><input type="number" id="calc-output" value="500" min="0" oninput="calculateCost()"></div>
+                                    </div>
+                                    <div class="field"><label>Number of Calls</label><input type="number" id="calc-calls" value="100" min="1" oninput="calculateCost()"></div>
+                                </div>
+                            </div>
+                            <div class="card calc-result-card">
+                                <h3 style="margin-bottom:20px">Estimated Cost</h3>
+                                <div class="big-cost"><span id="calc-total">$0.0000</span><small>total cost</small></div>
+                                <div class="cost-rows">
+                                    <div class="cost-row"><span>Per Call</span><span id="calc-per-call">$0.0000</span></div>
+                                    <div class="cost-row"><span>Input Cost</span><span id="calc-input-cost">$0.0000</span></div>
+                                    <div class="cost-row"><span>Output Cost</span><span id="calc-output-cost">$0.0000</span></div>
+                                    <div class="cost-row"><span>Input $/1M tokens</span><span id="calc-input-rate">$0.00</span></div>
+                                    <div class="cost-row"><span>Output $/1M tokens</span><span id="calc-output-rate">$0.00</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== COMPARISON ===== -->
+                    <div id="section-comparison" class="section">
+                        <div class="table-wrap">
+                            <table><thead><tr><th>Model</th><th>Provider</th><th>Avg Cost/Call</th><th>Avg Latency</th><th>Total Calls</th><th>Total Tokens</th><th>Success Rate</th></tr></thead><tbody id="comparison-body"></tbody></table>
+                            <div class="empty-state hidden" id="comparison-empty"><p>Track at least 2 calls per model to compare</p></div>
+                        </div>
+                    </div>
+
+                    <!-- ===== BUDGET ===== -->
+                    <div id="section-budget" class="section">
+                        <div class="grid-2col">
+                            <div class="card">
+                                <h3 style="margin-bottom:20px">Spending Limits</h3>
+                                <div class="field"><label>Daily Limit ($)</label><div class="input-prefix-wrap"><span>$</span><input type="number" id="budget-daily" step="0.01" min="0" placeholder="0.00"></div></div>
+                                <div class="field"><label>Monthly Limit ($)</label><div class="input-prefix-wrap"><span>$</span><input type="number" id="budget-monthly" step="0.01" min="0" placeholder="0.00"></div></div>
+                                <h3 style="margin: 20px 0 12px">Notifications</h3>
+                                <div class="field"><label>Alert Email</label><input type="email" id="budget-email" placeholder="alerts@company.com"></div>
+                                <div class="field"><label>Slack Webhook</label><input type="url" id="budget-slack" placeholder="https://hooks.slack.com/..."></div>
+                                <button class="btn-full" onclick="saveBudget()" style="margin-top:16px">Save Settings</button>
+                            </div>
+                            <div class="card">
+                                <h3 style="margin-bottom:20px">How Alerts Work</h3>
+                                <div class="info-rows">
+                                    <div class="info-row"><div class="info-dot cyan"></div><div><strong>Daily Limit</strong><p>Triggers when daily spend reaches the limit. Resets at midnight.</p></div></div>
+                                    <div class="info-row"><div class="info-dot purple"></div><div><strong>Monthly Limit</strong><p>Triggers when monthly spend reaches the limit. Resets on the 1st.</p></div></div>
+                                    <div class="info-row"><div class="info-dot orange"></div><div><strong>80% Warning</strong><p>Warning alert when spend reaches 80% of your set limit.</p></div></div>
+                                    <div class="info-row"><div class="info-dot green"></div><div><strong>Cost Spike</strong><p>Auto-alerts when a single call costs 3x more than the model average.</p></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== ALERTS ===== -->
+                    <div id="section-alerts" class="section">
+                        <div id="alerts-list"></div>
+                    </div>
+
+                    <!-- ===== OPTIMIZATION ===== -->
+                    <div id="section-optimize" class="section">
+                        <p style="color:var(--text-2);margin-bottom:20px;font-size:14px">AI-powered suggestions to reduce your LLM spending</p>
+                        <div id="optimize-stats" class="stats-row" style="margin-bottom:20px"></div>
+                        <div id="optimize-suggestions"></div>
+                    </div>
+
+                    <!-- ===== PRICING ===== -->
+                    <div id="section-pricing" class="section">
+                        <p style="color:var(--text-2);margin-bottom:20px;font-size:14px">Current pricing per 1M tokens for all supported models</p>
+                        <div id="pricing-grid" class="pricing-grid"></div>
+                    </div>
+
+                    <!-- ===== PLANS ===== -->
+                    <div id="section-plans" class="section">
+                        <div class="plan-banner" id="plan-banner"></div>
+                        <p style="color:var(--text-2);margin-bottom:20px;font-size:14px">Start free and upgrade when you grow. Cancel anytime.</p>
+                        <div id="plans-grid" class="plans-grid"></div>
+                    </div>
+
+                    <!-- ===== API REFERENCE ===== -->
+                    <div id="section-api-ref" class="section">
+                        <p style="color:var(--text-2);margin-bottom:20px;font-size:14px">Integrate LLM Cost Tracker into your application</p>
+
+                        <div class="card">
+                            <h3 style="margin-bottom:12px">1. Register & Get Token</h3>
+                            <div class="code-block">
+                                <div class="code-header"><span>POST /api/auth/register</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre>curl -X POST http://localhost:8000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "you@company.com", "password": "secret123", "full_name": "Your Name"}'</pre>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 style="margin-bottom:12px">2. Login</h3>
+                            <div class="code-block">
+                                <div class="code-header"><span>POST /api/auth/login</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre>curl -X POST http://localhost:8000/api/auth/login \
+  -d "username=you@company.com&password=secret123"</pre>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 style="margin-bottom:12px">3. Track API Calls</h3>
+                            <div class="code-block">
+                                <div class="code-header"><span>POST /api/track</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre>curl -X POST http://localhost:8000/api/track \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "openai",
+    "model": "gpt-4o",
+    "input_tokens": 150,
+    "output_tokens": 50,
+    "latency_ms": 1200,
+    "status": "success",
+    "project": "my-app"
+  }'</pre>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 style="margin-bottom:12px">Python SDK Example</h3>
+                            <div class="code-block">
+                                <div class="code-header"><span>Python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+<pre>import httpx
+
+class LLMTracker:
+    def __init__(self, base_url, token):
+        self.base_url = base_url
+        self.headers = {"Authorization": f"Bearer {token}"}
+
+    def track(self, provider, model, input_tokens,
+              output_tokens, latency_ms, status="success"):
+        return httpx.post(
+            f"{self.base_url}/api/track",
+            json={
+                "provider": provider,
+                "model": model,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "latency_ms": latency_ms,
+                "status": status,
+            },
+            headers=self.headers,
+        )
+
+# Usage
+tracker = LLMTracker("http://localhost:8000", "your-token")
+tracker.track("openai", "gpt-4o", 150, 50, 1200)</pre>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 style="margin-bottom:12px">All Endpoints</h3>
+                            <div class="endpoints-list">
+                                <div class="endpoint"><span class="method get">GET</span><span class="ep-path">/api/dashboard</span><span class="ep-desc">Dashboard summary</span></div>
+                                <div class="endpoint"><span class="method get">GET</span><span class="ep-path">/api/logs</span><span class="ep-desc">Paginated cost logs</span></div>
+                                <div class="endpoint"><span class="method get">GET</span><span class="ep-path">/api/forecast</span><span class="ep-desc">Cost forecast</span></div>
+                                <div class="endpoint"><span class="method get">GET</span><span class="ep-path">/api/comparison</span><span class="ep-desc">Model comparison</span></div>
+                                <div class="endpoint"><span class="method post">POST</span><span class="ep-path">/api/track</span><span class="ep-desc">Log an API call</span></div>
+                                <div class="endpoint"><span class="method post">POST</span><span class="ep-path">/api/budget</span><span class="ep-desc">Set budget limits</span></div>
+                                <div class="endpoint"><span class="method get">GET</span><span class="ep-path">/api/budget</span><span class="ep-desc">Get budget</span></div>
+                                <div class="endpoint"><span class="method get">GET</span><span class="ep-path">/api/alerts</span><span class="ep-desc">Get alerts</span></div>
+                                <div class="endpoint"><span class="method get">GET</span><span class="ep-path">/api/export</span><span class="ep-desc">Export CSV</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== SETTINGS ===== -->
+                    <div id="section-settings" class="section">
+                        <div class="grid-2col">
+                            <div class="card">
+                                <h3 style="margin-bottom:20px">Profile</h3>
+                                <div id="settings-profile">
+                                    <div class="field"><label>Name</label><input type="text" id="settings-name" placeholder="Your name"></div>
+                                    <div class="field"><label>Email</label><input type="email" id="settings-email" placeholder="your@email.com" disabled style="opacity:.5"></div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <h3 style="margin-bottom:20px">Quick Start Guide</h3>
+                                <div class="info-rows">
+                                    <div class="info-row"><div class="info-dot cyan"></div><div><strong>Step 1: Create Account</strong><p>Register with your email to get started</p></div></div>
+                                    <div class="info-row"><div class="info-dot purple"></div><div><strong>Step 2: Get API Token</strong><p>Login and copy your bearer token</p></div></div>
+                                    <div class="info-row"><div class="info-dot green"></div><div><strong>Step 3: Track Calls</strong><p>Send POST requests to /api/track after each LLM call</p></div></div>
+                                    <div class="info-row"><div class="info-dot orange"></div><div><strong>Step 4: Monitor Dashboard</strong><p>Watch your spending in real-time on the overview page</p></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="/static/dashboard.js"></script>
+</body>
+</html>
